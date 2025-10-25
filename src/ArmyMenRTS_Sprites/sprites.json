@@ -1,0 +1,448 @@
+{
+  "environment": [
+    {
+      "name": "spr_bush",
+      "file": "environment/spr_bush.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_ground_tile",
+      "file": "environment/spr_ground_tile.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_path_tile",
+      "file": "environment/spr_path_tile.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_toy_scrap",
+      "file": "environment/spr_toy_scrap.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_tree",
+      "file": "environment/spr_tree.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    }
+  ],
+  "buildings": [
+    {
+      "name": "spr_barracks_A",
+      "file": "buildings/spr_barracks_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_barracks_B",
+      "file": "buildings/spr_barracks_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_fort_A",
+      "file": "buildings/spr_fort_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_fort_B",
+      "file": "buildings/spr_fort_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_garage_A",
+      "file": "buildings/spr_garage_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_garage_B",
+      "file": "buildings/spr_garage_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_hq_A",
+      "file": "buildings/spr_hq_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_hq_B",
+      "file": "buildings/spr_hq_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_storage_A",
+      "file": "buildings/spr_storage_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_storage_B",
+      "file": "buildings/spr_storage_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    }
+  ],
+  "units": [
+    {
+      "name": "spr_soldier_basic_A",
+      "file": "units/spr_soldier_basic_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_basic_B",
+      "file": "units/spr_soldier_basic_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_bazooka_A",
+      "file": "units/spr_soldier_bazooka_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_bazooka_B",
+      "file": "units/spr_soldier_bazooka_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_flamer_A",
+      "file": "units/spr_soldier_flamer_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_flamer_B",
+      "file": "units/spr_soldier_flamer_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_grenade_A",
+      "file": "units/spr_soldier_grenade_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_grenade_B",
+      "file": "units/spr_soldier_grenade_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_mine_A",
+      "file": "units/spr_soldier_mine_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_soldier_mine_B",
+      "file": "units/spr_soldier_mine_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    }
+  ],
+  "vehicles": [
+    {
+      "name": "spr_bulldozer_A",
+      "file": "vehicles/spr_bulldozer_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_bulldozer_B",
+      "file": "vehicles/spr_bulldozer_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_dumptruck_A",
+      "file": "vehicles/spr_dumptruck_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_dumptruck_B",
+      "file": "vehicles/spr_dumptruck_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_jeep_heal_A",
+      "file": "vehicles/spr_jeep_heal_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_jeep_heal_B",
+      "file": "vehicles/spr_jeep_heal_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_jeep_mg_A",
+      "file": "vehicles/spr_jeep_mg_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_jeep_mg_B",
+      "file": "vehicles/spr_jeep_mg_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_tank_A",
+      "file": "vehicles/spr_tank_A.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_tank_B",
+      "file": "vehicles/spr_tank_B.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    }
+  ],
+  "fx": [
+    {
+      "name": "spr_explosion_large_f0",
+      "file": "fx/spr_explosion_large_f0.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_explosion_large_f1",
+      "file": "fx/spr_explosion_large_f1.png",
+      "width": 64,
+      "height": 64,
+      "frames": 2
+    },
+    {
+      "name": "spr_explosion_large_f2",
+      "file": "fx/spr_explosion_large_f2.png",
+      "width": 64,
+      "height": 64,
+      "frames": 3
+    },
+    {
+      "name": "spr_explosion_large_f3",
+      "file": "fx/spr_explosion_large_f3.png",
+      "width": 64,
+      "height": 64,
+      "frames": 4
+    },
+    {
+      "name": "spr_explosion_large_f4",
+      "file": "fx/spr_explosion_large_f4.png",
+      "width": 64,
+      "height": 64,
+      "frames": 5
+    },
+    {
+      "name": "spr_explosion_large_f5",
+      "file": "fx/spr_explosion_large_f5.png",
+      "width": 64,
+      "height": 64,
+      "frames": 6
+    },
+    {
+      "name": "spr_explosion_small_f0",
+      "file": "fx/spr_explosion_small_f0.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_explosion_small_f1",
+      "file": "fx/spr_explosion_small_f1.png",
+      "width": 64,
+      "height": 64,
+      "frames": 2
+    },
+    {
+      "name": "spr_explosion_small_f2",
+      "file": "fx/spr_explosion_small_f2.png",
+      "width": 64,
+      "height": 64,
+      "frames": 3
+    },
+    {
+      "name": "spr_explosion_small_f3",
+      "file": "fx/spr_explosion_small_f3.png",
+      "width": 64,
+      "height": 64,
+      "frames": 4
+    },
+    {
+      "name": "spr_fire_flamer_f0",
+      "file": "fx/spr_fire_flamer_f0.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_fire_flamer_f1",
+      "file": "fx/spr_fire_flamer_f1.png",
+      "width": 64,
+      "height": 64,
+      "frames": 2
+    },
+    {
+      "name": "spr_fire_flamer_f2",
+      "file": "fx/spr_fire_flamer_f2.png",
+      "width": 64,
+      "height": 64,
+      "frames": 3
+    },
+    {
+      "name": "spr_fire_flamer_f3",
+      "file": "fx/spr_fire_flamer_f3.png",
+      "width": 64,
+      "height": 64,
+      "frames": 4
+    },
+    {
+      "name": "spr_heal_wave_f0",
+      "file": "fx/spr_heal_wave_f0.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_heal_wave_f1",
+      "file": "fx/spr_heal_wave_f1.png",
+      "width": 64,
+      "height": 64,
+      "frames": 2
+    },
+    {
+      "name": "spr_heal_wave_f2",
+      "file": "fx/spr_heal_wave_f2.png",
+      "width": 64,
+      "height": 64,
+      "frames": 3
+    },
+    {
+      "name": "spr_heal_wave_f3",
+      "file": "fx/spr_heal_wave_f3.png",
+      "width": 64,
+      "height": 64,
+      "frames": 4
+    },
+    {
+      "name": "spr_mine",
+      "file": "fx/spr_mine.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_mine_explosion_f0",
+      "file": "fx/spr_mine_explosion_f0.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_mine_explosion_f1",
+      "file": "fx/spr_mine_explosion_f1.png",
+      "width": 64,
+      "height": 64,
+      "frames": 2
+    },
+    {
+      "name": "spr_mine_explosion_f2",
+      "file": "fx/spr_mine_explosion_f2.png",
+      "width": 64,
+      "height": 64,
+      "frames": 3
+    }
+  ],
+  "ui": [
+    {
+      "name": "spr_button_building",
+      "file": "ui/spr_button_building.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_cursor_select",
+      "file": "ui/spr_cursor_select.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_health_bar",
+      "file": "ui/spr_health_bar.png",
+      "width": 64,
+      "height": 16,
+      "frames": 1
+    },
+    {
+      "name": "spr_panel_ui",
+      "file": "ui/spr_panel_ui.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    },
+    {
+      "name": "spr_selector_circle",
+      "file": "ui/spr_selector_circle.png",
+      "width": 64,
+      "height": 64,
+      "frames": 1
+    }
+  ]
+}
