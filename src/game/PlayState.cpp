@@ -24,6 +24,16 @@ void PlayState::handleEvent(const sf::Event& e){
             }
         }
     }
+    if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::N){
+        showFog_ = !showFog_;
+    }
+
+    if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::M){
+        auto& win = game.window();
+        sf::Vector2f w = screenToWorld(win, sf::Mouse::getPosition(win));
+        mines_.push_back({w, 18.f, true});
+    }
+
 }
 void PlayState::update(float dt){
     auto& win = game.window();
@@ -35,7 +45,7 @@ void PlayState::update(float dt){
         cam = win.getDefaultView();
         player.pos = {4*64.f+32.f, 4*64.f+32.f};
         player.target = player.pos;
-        font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"); // may fail silently on some OS
+        font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf"); // may fail silently on some OS
         hud.setFont(font); hud.setCharacterSize(16); hud.setFillColor(sf::Color::White);
         init=true;
     }
@@ -60,12 +70,34 @@ void PlayState::update(float dt){
         }
     }
 
+    auto len = [](sf::Vector2f v){ return std::sqrt(v.x*v.x + v.y*v.y); };
+
+    for (auto& m : mines_) if (m.active) {
+        // ejemplo con el player; si tienes un vector<Unidad> itera sobre todas
+        if (len(player.pos - m.pos) < m.radius) {
+            m.active = false;
+            // aplica daño/efecto; por ahora placeholder: deseleccionar jugador
+            player.selected = false;
+        }
+    }
+
+
+    fog.clear();
+    if (showFog_) {
+        // Revela alrededor de cada unidad aliada que quieras visible en el mapa
+        // player ya existe; si tienes más, repite.
+        fog.revealCircle(player.pos, 160.f); // radio placeholder
+    }
+
+
     // Reveal fog around unit
     fog.revealCircle(player.pos, 5*64.f);
 
     // HUD text
     hud.setString("LClick: select | RClick: move | Wheel: zoom | WASD: pan");
     hud.setPosition(cam.getCenter().x - cam.getSize().x/2 + 10, cam.getCenter().y - cam.getSize().y/2 + 10);
+
+
 }
 sf::Vector2f PlayState::screenToWorld(sf::RenderWindow& win, sf::Vector2i mouse) const{
     return win.mapPixelToCoords(mouse);
@@ -77,6 +109,15 @@ void PlayState::render(sf::RenderWindow& win){
     body.setFillColor(sf::Color(60,150,70));
     win.draw(body);
     // selection ring
+
+    for (auto& m : mines_) if (m.active) {
+        sf::CircleShape c(m.radius);
+        c.setOrigin(m.radius, m.radius);
+        c.setFillColor(sf::Color(120,60,60));
+        c.setPosition(m.pos);
+        win.draw(c);
+    }
+
     if(player.selected){
         sf::CircleShape ring(18.f); ring.setOrigin(18,18); ring.setPosition(player.pos);
         ring.setFillColor(sf::Color::Transparent);
@@ -84,4 +125,6 @@ void PlayState::render(sf::RenderWindow& win){
         win.draw(ring);
     }
     win.draw(hud);
+
+
 }

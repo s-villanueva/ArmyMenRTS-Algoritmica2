@@ -3,7 +3,7 @@
 #include "State.hpp"
 #include "../game/PlayState.hpp"
 
-Game::Game() : m_window(sf::VideoMode(1280,720), "ArmyMen RTS — Playable"){
+Game::Game() : m_window(sf::VideoMode(1280,720), "ArmyMen RTS"){
     m_window.setFramerateLimit(60);
     changeState(std::make_unique<PlayState>(*this));
 }
