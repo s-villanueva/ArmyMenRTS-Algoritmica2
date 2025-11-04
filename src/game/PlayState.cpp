@@ -274,9 +274,20 @@ void PlayState::handleEvent(const sf::Event& e){
         for (auto& b : buildingsA_) if (b.type == Building::Type::HQ){ b.queue.push_back("Minesweeper"); break; }
 
     // Construcción con Bulldozer (B)
-    if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::B) {
-        sf::Vector2f w = worldMouse(win, cam);
-        bulldozerBuildAttempt(w);
+    // AHORA: construcción por teclas (B=HQ, D=Depot, G=Garage)
+    if (e.type == sf::Event::KeyPressed) {
+        if (e.key.code == sf::Keyboard::B) {
+            sf::Vector2f w = worldMouse(win, cam);
+            bulldozerBuildAttempt(w, Building::Type::HQ);
+        }
+        if (e.key.code == sf::Keyboard::D) {
+            sf::Vector2f w = worldMouse(win, cam);
+            bulldozerBuildAttempt(w, Building::Type::Depot);
+        }
+        if (e.key.code == sf::Keyboard::G) {
+            sf::Vector2f w = worldMouse(win, cam);
+            bulldozerBuildAttempt(w, Building::Type::Garage);
+        }
     }
 
     // Colocar mina (M)
@@ -685,8 +696,11 @@ void PlayState::update(float dt){
     hud.setString(
         "Plastico: " + std::to_string(plastic_) +
         " | Aliados: " + std::to_string((int)allies_.size()) +
-        "\nQ: Soldier  E: Tank  H: Harvester  X: Minesweeper  |  B: Construir HQ  |  M: Mina  |  N: Fog"
+        "\nQ: Soldier  E: Tank  H: Harvester  X: Minesweeper"
+        "  |  B: HQ  D: Depot  G: Garage"
+        "  |  M: Mina  |  N: Fog"
     );
+
     hud.setPosition(cam.getCenter().x - cam.getSize().x/2 + 10, cam.getCenter().y - cam.getSize().y/2 + 10);
 }
 
@@ -869,17 +883,22 @@ void PlayState::render(sf::RenderWindow& win){
     win.draw(hud);
 }
 
-// ==================== Construcción con Bulldozer ====================
-void PlayState::bulldozerBuildAttempt(const sf::Vector2f& pos) {
+void PlayState::bulldozerBuildAttempt(const sf::Vector2f& pos, Building::Type type) {
     if (!(bulldozer.alive && bulldozer.type == UnitType::Bulldozer)) return;
 
-    const int cost = costs_.count("HQ") ? costs_["HQ"] : 50;
+    // Coste según el tipo
+    int cost = 0;
+    switch (type) {
+        case Building::Type::HQ:     cost = costs_.count("HQ")     ? costs_["HQ"]     : 50; break;
+        case Building::Type::Depot:  cost = costs_.count("Depot")  ? costs_["Depot"]  : 40; break;
+        case Building::Type::Garage: cost = costs_.count("Garage") ? costs_["Garage"] : 60; break;
+    }
     if (plastic_ < cost) return;
 
     plastic_ -= cost;
 
     BuildJob job;
-    job.type      = Building::Type::HQ;
+    job.type      = type;
     job.target    = pos;
     job.buildTime = 2.0f;
     job.progress  = 0.f;
@@ -887,6 +906,7 @@ void PlayState::bulldozerBuildAttempt(const sf::Vector2f& pos) {
     job.started   = false;
     buildJobs_.push_back(job);
 }
+
 
 void PlayState::updateBuildJobs(float dt){
     if (!(bulldozer.alive && bulldozer.type == UnitType::Bulldozer)) return;

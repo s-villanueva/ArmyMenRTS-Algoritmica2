@@ -199,7 +199,7 @@ private:
     //Unit player;
 
     // --- Funciones auxiliares (implementadas en PlayState.cpp) ---
-    void bulldozerBuildAttempt(const sf::Vector2f& pos);
+    void bulldozerBuildAttempt(const sf::Vector2f& pos, Building::Type type);
     void updateBuildJobs(float dt);
     void drawBuildJobs(sf::RenderWindow& win);
 
