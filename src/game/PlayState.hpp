@@ -9,9 +9,42 @@
 #include "../map/TileMap.hpp"
 #include "../map/FogOfWar.hpp"
 #include "../render/Renderer.hpp"
+#include <filesystem>
+
+struct Sprite2D {
+    sf::Sprite spr;
+    int cols{1};
+    int rows{1};
+    int frame{0};
+    float fps{10.f};
+    float t{0.f};
+    bool flipX{false};
+    sf::Vector2i frameSize{0,0};
+
+    // NUEVO: para “recorrer” solo una fila concreta
+    int row{0};            // fila bloqueada (0 = primera)
+    int framesInRow{0};    // cuántos frames usar en esa fila (0 = usar toda la grilla normal)
+    int startCol{0};       // por si quieres empezar en una columna distinta (normalmente 0)
+};
+
+
+// ==== Components básicos (añadir cerca de tus tipos de unidad) ====
+struct Health {
+    float hp = 100.f;
+    float max = 100.f;
+};
+
+struct Attack {
+    float dmg = 8.f;        // daño por disparo
+    float range = 140.f;    // alcance de disparo en px
+    float cooldown = 0.5f;  // tiempo entre disparos
+    float tcd = 0.f;        // tiempo restante de cooldown
+};
 
 // === Tipos base de unidad ===
 enum class UnitType { Soldier, Harvester, Bulldozer, Minesweeper, Tank };
+
+
 
 // === Unidad mínima (se usa para "player" de pruebas) ===
 struct Unit {
@@ -23,6 +56,9 @@ struct Unit {
     sf::Vector2f vel{0.f, 0.f};
     UnitType type{UnitType::Soldier};
     bool alive{true};
+    int   team = 0;             // 0=A (jugador), 1=B (enemigo)
+    Health health{100.f, 100.f};
+    Attack attack{8.f, 140.f, 0.5f, 0.f};
 };
 
 // === Unidad del ejército aliado (Equipo A) ===
@@ -36,6 +72,9 @@ struct Ally {
     bool alive{true};
     float speed{90.f};
     float hp{100.f};
+    // Combate básico
+    Sprite2D vis;
+    float attackCd{0.f};   // cooldown de disparo (seg)
     sf::Color color{sf::Color(60,150,70)};
 
     // Solo para Harvester (volqueta)
@@ -98,6 +137,8 @@ private:
     float    zoom{1.f};
     sf::Font font;
     sf::Text hud;
+    sf::Texture texSoldierGreen_;
+    sf::Texture texSoldierBrown_;
 
     // --- Input selección (si quisieras selección múltiple más adelante) ---
     bool            dragging_{false};
@@ -118,6 +159,8 @@ private:
         {"Soldier",10},{"Tank",50},{"Harvester",25},{"Minesweeper",15}
     };
 
+
+
     // Bulldozer dedicado (lo mantenemos fuera del vector para claridad de la demo)
     Unit bulldozer;
 
@@ -137,4 +180,14 @@ private:
 
     // Proyección de coordenadas
     sf::Vector2f screenToWorld(sf::RenderWindow& win, sf::Vector2i mouse) const;
+
+    // --- Enemigos (Equipo B) + Patrulla ---
+    std::vector<Ally> enemies_;                 // reusamos Ally para enemigos
+    std::vector<sf::Vector2f> patrolPtsB_;      // waypoints de patrulla
+    size_t patrolIdxB_ = 0;                     // índice actual
+
+    // --- Fin de partida ---
+    enum class GameOver { None, Win, Lose };
+    GameOver gameOver_ = GameOver::None;
+
 };

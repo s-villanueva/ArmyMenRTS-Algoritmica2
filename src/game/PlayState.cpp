@@ -3,6 +3,108 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
+
+static std::string spritePath(const std::string& rel) {
+    namespace fs = std::filesystem;
+
+    // 1) Ejecutando desde build/
+    fs::path p1 = fs::path("src/ArmyMenRTS_Sprites") / rel;
+    if (fs::exists(p1)) return p1.string();
+
+    // 2) Ejecutando desde raíz del repo
+    fs::path p2 = fs::path("../src/ArmyMenRTS_Sprites") / rel;
+    if (fs::exists(p2)) return p2.string();
+
+    // 3) Ejecutando desde src/ (algunos IDEs)
+    fs::path p3 = fs::path("../../src/ArmyMenRTS_Sprites") / rel;
+    if (fs::exists(p3)) return p3.string();
+
+    // 4) Último intento: tal cual
+    return (fs::path("src/ArmyMenRTS_Sprites") / rel).string();
+}
+
+static void initGrid(Sprite2D& s, sf::Texture& tex, int cols, int rows, float fps = 10.f) {
+    s.spr.setTexture(tex);
+    s.cols = std::max(1, cols);
+    s.rows = std::max(1, rows);
+    s.fps  = fps;
+    s.frame = 0;
+    s.t = 0.f;
+    s.row = 0;
+    s.framesInRow = 0;  // 0 = sin restricción
+    s.startCol = 0;
+
+    auto sz = tex.getSize();
+    s.frameSize = { int(sz.x / unsigned(s.cols)), int(sz.y / unsigned(s.rows)) };
+    s.spr.setTextureRect(sf::IntRect(0, 0, s.frameSize.x, s.frameSize.y));
+    s.spr.setOrigin(float(s.frameSize.x)/2.f, float(s.frameSize.y)/2.f);
+}
+
+
+// === Animación en grilla (cols x rows) ===
+static void initGridRow(Sprite2D& s, sf::Texture& tex,
+                        int cols, int rows, int rowIndex,
+                        int framesInRow, float fps = 10.f) {
+    s.spr.setTexture(tex);
+    s.cols = std::max(1, cols);
+    s.rows = std::max(1, rows);
+    s.row  = std::clamp(rowIndex, 0, s.rows - 1);
+    s.framesInRow = std::clamp(framesInRow, 1, s.cols);
+    s.startCol = 0;
+    s.fps  = fps;
+    s.frame = 0;
+    s.t = 0.f;
+
+    auto sz = tex.getSize();
+    s.frameSize = { int(sz.x / unsigned(s.cols)), int(sz.y / unsigned(s.rows)) };
+    // arranca en la columna 0 de la fila elegida
+    s.spr.setTextureRect(sf::IntRect(0, s.row * s.frameSize.y, s.frameSize.x, s.frameSize.y));
+    s.spr.setOrigin(float(s.frameSize.x)/2.f, float(s.frameSize.y)/2.f);
+}
+
+
+static void updateAnim(Sprite2D& s, float dt) {
+    const bool lockRow = (s.framesInRow > 0);
+    const int total = lockRow ? s.framesInRow : (s.cols * s.rows);
+    if (total <= 1 || s.fps <= 0.f) return;
+
+    s.t += dt;
+    const float step = 1.f / s.fps;
+    while (s.t >= step) {
+        s.t -= step;
+        s.frame = (s.frame + 1) % total;
+
+        int fx, fy;
+        if (lockRow) {
+            // Recorre solo la fila bloqueada
+            fx = (s.startCol + s.frame) % s.cols;
+            fy = s.row;
+        } else {
+            // Recorre toda la grilla
+            int linear = s.frame;
+            fx = linear % s.cols;
+            fy = linear / s.cols;
+        }
+
+        s.spr.setTextureRect(sf::IntRect(
+            fx * s.frameSize.x,
+            fy * s.frameSize.y,
+            s.frameSize.x,
+            s.frameSize.y
+        ));
+    }
+}
+
+
+
+static void setFlipX(Sprite2D& s, bool flip) {
+    if (flip == s.flipX) return;
+    s.flipX = flip;
+    auto sc = s.spr.getScale();
+    float sx = (flip ? -1.f : 1.f) * (sc.x == 0.f ? 1.f : std::abs(sc.x));
+    s.spr.setScale(sx, sc.y == 0.f ? 1.f : sc.y);
+}
 
 // ==================== Helpers locales ====================
 static float vlen(sf::Vector2f v){ return std::sqrt(v.x*v.x + v.y*v.y); }
@@ -181,8 +283,18 @@ void PlayState::update(float dt){
         // player.pos = {4*64.f+32.f, 4*64.f+32.f};
         // player.target = player.pos;
 
-        font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf"); // puede fallar silencioso en otros SO
+        if (!font.loadFromFile(spritePath("ui/DejaVuSans.ttf"))) {
+            std::cerr << "WARN: Coloca DejaVuSans.ttf en src/ArmyMenRTS_Sprites/ui/\n";
+        } // puede fallar silencioso en otros SO
         hud.setFont(font); hud.setCharacterSize(16); hud.setFillColor(sf::Color::White);
+
+        if (!texSoldierGreen_.loadFromFile(spritePath("units/soldier_green.png")))
+            std::cerr << "WARN: falta src/ArmyMenRTS_Sprites/units/soldier_green.png\n";
+        if (!texSoldierBrown_.loadFromFile(spritePath("units/soldier_brown.png")))
+            std::cerr << "WARN: falta src/ArmyMenRTS_Sprites/units/soldier_brown.png\n";
+        texSoldierGreen_.setSmooth(false);
+        texSoldierBrown_.setSmooth(false);
+
 
         // === Recursos (juguetes) ===
         resources_.push_back({ {600.f, 400.f}, 300.f });
@@ -202,6 +314,9 @@ void PlayState::update(float dt){
         // 5 soldados básicos
         for(int i=0;i<5;i++){
             Ally s;
+            initGridRow(s.vis, texSoldierGreen_, /*cols*/8, /*rows*/2, /*rowIndex*/0, /*frames*/8, 10.f);
+            s.vis.spr.setScale(0.10f, 0.10f);
+
             s.type  = UnitType::Soldier;
             s.pos   = {220.f + float(i*18), 260.f};
             s.speed = 110.f;
@@ -222,6 +337,9 @@ void PlayState::update(float dt){
         {
             Ally m;
             m.type = UnitType::Minesweeper;
+            initGridRow(m.vis, texSoldierGreen_, 8, 2, 1, 8, 10.f);
+            m.vis.spr.setScale(0.10f, 0.10f);
+
             m.pos  = {285.f, 260.f};
             m.speed= 100.f;
             m.color= sf::Color(120,200,120);
@@ -236,6 +354,36 @@ void PlayState::update(float dt){
 
         // Plástico inicial Equipo A
         plastic_ = 300;
+
+        // === Enemigos (Equipo B) semilla ===
+        // === Enemigos (Equipo B) semilla (estáticos y corregidos) ===
+        enemies_.clear();
+        for (int i = 0; i < 6; ++i) {
+            Ally e;
+
+            // El sprite brown tiene 8 columnas y 2 filas (fila 0 = soldado, fila 1 = buscaminas)
+            initGridRow(e.vis, texSoldierBrown_, /*cols*/8, /*rows*/2, /*rowIndex*/0, /*framesInRow*/8, /*fps*/0.f);
+
+            // Escala más pequeña
+            e.vis.spr.setScale(0.10f, 0.10f);
+
+            // Posición (ajustada para que no se monten)
+            e.type  = UnitType::Soldier;
+            e.pos   = { 900.f + float(i*40), 420.f };
+
+            // Sin movimiento
+            e.speed = 0.f;
+            e.hp    = 100.f;
+            e.color = sf::Color(120,120,220);
+            e.alive = true;
+
+            enemies_.push_back(e);
+        }
+
+        // Patrulla rectangular simple
+        patrolPtsB_ = { {900,420}, {900,620}, {1100,620}, {1100,420} };
+        patrolIdxB_ = 0;
+
 
         init=true;
     }
@@ -292,19 +440,6 @@ void PlayState::update(float dt){
         win.draw(dragRect_);
     }
 
-    for(auto& a : allies_){
-        if(!a.alive) continue;
-
-        // Movimiento por target
-        if(a.hasTarget){
-            sf::Vector2f d = a.target - a.pos;
-            float L = vlen(d);
-            if(L>2.f) a.pos += vnorm(d) * a.speed * dt;
-            else a.hasTarget = false;
-        }
-
-        // ... (resto de lógicas: Harvester, Minesweeper, etc.)
-    }
     if(bulldozer.alive){
         sf::CircleShape c(6.f);
         c.setOrigin(6,6);
@@ -389,12 +524,50 @@ void PlayState::update(float dt){
             }
         }
         else if(a.type == UnitType::Soldier){
-            // FUTURO: disparo en línea recta
+            // === Combate hitscan simple ===
+            // Stats básicos (ajústalos luego si quieres)
+            const float dmg = 8.f;
+            const float rng = 140.f;
+            const float cd  = 0.5f;
+
+            a.attackCd = std::max(0.f, a.attackCd - dt);
+
+            // Target enemigo más cercano en alcance
+            Ally* tgt = nullptr; float best = 1e9f;
+            for (auto& e : enemies_) if (e.alive) {
+                float d = vlen(e.pos - a.pos);
+                if (d < rng && d < best) { best = d; tgt = &e; }
+            }
+            if (tgt) setFlipX(a.vis, (tgt->pos.x - a.pos.x) < 0.f);
+
+
+            if (tgt && a.attackCd <= 0.f) {
+                tgt->hp -= dmg;
+                a.attackCd = cd;
+                if (tgt->hp <= 0.f) {
+                    tgt->alive = false;
+                }
+            }
         }
         else if(a.type == UnitType::Tank){
             // FUTURO: lógica tanque
         }
     }
+
+    // ===== Enemigos patrullando (simple) =====
+    // ===== Enemigos estáticos (sin patrulla) =====
+    for (auto& e : enemies_) {
+        if (!e.alive) continue;
+
+        // No movimiento
+        // Solo actualiza animación si tiene fps > 0
+        if (e.vis.fps > 0.f) updateAnim(e.vis, dt);
+
+        // Asegurar posición correcta
+        e.vis.spr.setPosition(e.pos);
+    }
+
+
 
     // ===== Colas de producción (HQ/Garage) → spawnear unidades =====
     for (auto& b : buildingsA_){
@@ -410,6 +583,9 @@ void PlayState::update(float dt){
                 if (plastic_ >= costs_["Soldier"]){
                     plastic_ -= costs_["Soldier"];
                     Ally s; s.type=UnitType::Soldier; s.pos=spawnAt; s.speed=110.f; s.color=sf::Color(60,150,70);
+                    initGrid(s.vis, texSoldierGreen_, /*cols*/8, /*rows*/1, 10.f);
+                    s.vis.spr.setScale(0.10f, 0.10f);
+                    s.vis.spr.setPosition(s.pos);
                     allies_.push_back(s);
                 }
             } else if (item == "Tank"){
@@ -450,6 +626,20 @@ void PlayState::update(float dt){
         // Mostrar todo
         fog.revealCircle({map.width()*32.f, map.height()*32.f}, 10000.f);
     }
+
+    // ===== Win / Lose mínimo =====
+    if (gameOver_ == GameOver::None) {
+        // Ganas si no quedan enemigos
+        bool anyEnemyAlive = std::any_of(enemies_.begin(), enemies_.end(),
+                                         [](const Ally& u){ return u.alive; });
+        if (!anyEnemyAlive) gameOver_ = GameOver::Win;
+
+        // Pierdes si te quedas sin edificios o sin bulldozer (si lo consideras imprescindible)
+        int aliveA_buildings = (int)buildingsA_.size(); // si luego marcas alive por edificio, ajusta
+        bool dozerDead = !bulldozer.alive;
+        if (aliveA_buildings == 0 || dozerDead) gameOver_ = GameOver::Lose;
+    }
+
 
     // ===== HUD =====
     hud.setString(
@@ -527,10 +717,14 @@ void PlayState::render(sf::RenderWindow& win){
 
     // Aliados (Equipo A)
     for (auto& a : allies_) if(a.alive){
-        sf::CircleShape c(8.f); c.setOrigin(8,8);
-        c.setPosition(a.pos);
-        c.setFillColor(a.color);
-        win.draw(c);
+        if (a.vis.spr.getTexture()) {
+            win.draw(a.vis.spr);
+        } else {
+            sf::CircleShape c(8.f); c.setOrigin(8,8);
+            c.setPosition(a.pos);
+            c.setFillColor(a.color);
+            win.draw(c);
+        }
 
         if(a.selected){
             sf::CircleShape ring(12.f); ring.setOrigin(12,12);
@@ -540,7 +734,7 @@ void PlayState::render(sf::RenderWindow& win){
             ring.setOutlineThickness(1.f);
             win.draw(ring);
         }
-        // Indicador de carga de Harvester
+
         if(a.type==UnitType::Harvester){
             float r = (a.cargo/a.cargoCap);
             sf::RectangleShape back({18,3}); back.setOrigin(9,14); back.setPosition(a.pos);
@@ -549,6 +743,32 @@ void PlayState::render(sf::RenderWindow& win){
             fill.setFillColor(sf::Color(240,240,90)); win.draw(fill);
         }
     }
+
+
+    // Enemigos (Equipo B)
+    for (auto& e : enemies_) if (e.alive) {
+        if (e.vis.spr.getTexture()) {
+            win.draw(e.vis.spr);
+        } else {
+            sf::CircleShape c(8.f); c.setOrigin(8,8);
+            c.setPosition(e.pos);
+            c.setFillColor(sf::Color(200,60,60));
+            win.draw(c);
+        }
+    }
+
+
+    if (gameOver_ != GameOver::None) {
+        sf::Text t; t.setFont(font);
+        t.setCharacterSize(48);
+        t.setString(gameOver_==GameOver::Win ? "YOU WIN" : "YOU LOSE");
+        t.setFillColor(sf::Color::White);
+        t.setOutlineColor(sf::Color::Black);
+        t.setOutlineThickness(2.f);
+        t.setPosition(cam.getCenter().x - 140.f, cam.getCenter().y - 40.f);
+        win.draw(t);
+    }
+
 
     // HUD
     win.draw(hud);
