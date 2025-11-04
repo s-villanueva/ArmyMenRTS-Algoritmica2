@@ -136,7 +136,6 @@ static void drawArc(sf::RenderWindow& win, sf::Vector2f center, float radius, fl
     win.draw(fan);
 }
 
-
 // mapear mouse (respetando la vista cam)
 
 // offsets para formación (cuadrícula compacta)
@@ -301,26 +300,6 @@ void PlayState::update(float dt){
         map.generate(32,20);
         fog.init(map.width(), map.height());
         cam = win.getDefaultView();
-
-        // === Terreno: textura repetida ===
-        if (groundTex_.loadFromFile("assets/ground_tile.png")) {
-            groundTex_.setRepeated(true);
-            groundTex_.setSmooth(true);
-
-            const float TS = 64.f;
-            const float worldW = map.width()  * TS;
-            const float worldH = map.height() * TS;
-
-            groundRect_.setSize({worldW, worldH});
-            groundRect_.setPosition(0.f, 0.f);
-            groundRect_.setTexture(&groundTex_);
-            // El textureRect define cómo se “extiende” la texture en píxeles sobre el rectángulo completo
-            groundRect_.setTextureRect(sf::IntRect(0, 0, (int)worldW, (int)worldH));
-
-            groundLoaded_ = true;
-        } else {
-            std::cerr << "[WARN] No se pudo cargar assets/ground_tile.png\n";
-        }
 
         // Player de pruebas (lo mantenemos por compatibilidad con tu base)
         // player.pos = {4*64.f+32.f, 4*64.f+32.f};
@@ -832,19 +811,6 @@ void PlayState::render(sf::RenderWindow& win){
         }
     }
 
-
-    // Enemigos (Equipo B)
-    for (auto& e : enemies_) if (e.alive) {
-        if (e.vis.spr.getTexture()) {
-            win.draw(e.vis.spr);
-        } else {
-            sf::CircleShape c(8.f); c.setOrigin(8,8);
-            c.setPosition(e.pos);
-            c.setFillColor(sf::Color(200,60,60));
-            win.draw(c);
-        }
-    }
-
     // === Fortines (hexágono + arco de visión) ===
     for(auto& f : forts_){
         // Hexágono
@@ -884,6 +850,19 @@ void PlayState::render(sf::RenderWindow& win){
         win.draw(ray, 2, sf::Lines);
     }
 
+
+
+    // Enemigos (Equipo B)
+    for (auto& e : enemies_) if (e.alive) {
+        if (e.vis.spr.getTexture()) {
+            win.draw(e.vis.spr);
+        } else {
+            sf::CircleShape c(8.f); c.setOrigin(8,8);
+            c.setPosition(e.pos);
+            c.setFillColor(sf::Color(200,60,60));
+            win.draw(c);
+        }
+    }
 
 
     if (gameOver_ != GameOver::None) {
