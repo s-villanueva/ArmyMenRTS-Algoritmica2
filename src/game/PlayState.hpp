@@ -67,6 +67,7 @@ struct Ally {
     sf::Vector2f pos{};
     sf::Vector2f vel{};
     sf::Vector2f target{};
+    float radius{8.f};   // radio de colisión/render aprox (soldados/volquetas)
     bool hasTarget{false};
     bool selected{false};
     bool alive{true};
