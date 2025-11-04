@@ -49,14 +49,14 @@ void PlayState::handleEvent(const sf::Event& e){
     if(e.type==sf::Event::MouseButtonPressed){
         if(e.mouseButton.button==sf::Mouse::Left){
             sf::Vector2f w = screenToWorld(win,{e.mouseButton.x,e.mouseButton.y});
-            player.selected = (std::hypot(w.x-player.pos.x, w.y-player.pos.y) < 28.f);
+          //  player.selected = (std::hypot(w.x-player.pos.x, w.y-player.pos.y) < 28.f);
         }
-        if(e.mouseButton.button==sf::Mouse::Right){
-            if(player.selected){
-                sf::Vector2f w = screenToWorld(win,{e.mouseButton.x,e.mouseButton.y});
-                player.target = w; player.hasTarget=true;
-            }
-        }
+        // if(e.mouseButton.button==sf::Mouse::Right){
+        //     if(player.selected){
+        //         sf::Vector2f w = screenToWorld(win,{e.mouseButton.x,e.mouseButton.y});
+        //         player.target = w; player.hasTarget=true;
+        //     }
+        // }
     }
 
     if(e.type==sf::Event::MouseButtonPressed){
@@ -85,7 +85,7 @@ void PlayState::handleEvent(const sf::Event& e){
             if(bulldozerSelected) { bulldozer.hasTarget = true; }
         }else{
             // si nadie está seleccionado, mueve el "player" de pruebas como antes
-            if(player.selected){ player.target = tgt; player.hasTarget = true; }
+            //if(player.selected){ player.target = tgt; player.hasTarget = true; }
         }
     }
 }
@@ -104,7 +104,7 @@ if(e.type==sf::Event::MouseButtonReleased && e.mouseButton.button==sf::Mouse::Le
         // limpia selección previa si no hay Shift
         for(auto& a : allies_) a.selected = false;
         bulldozer.selected = false;
-        player.selected = false; // opcional
+       // player.selected = false; // opcional
     }
 
     if(isClick){
@@ -120,7 +120,7 @@ if(e.type==sf::Event::MouseButtonReleased && e.mouseButton.button==sf::Mouse::Le
         else{
             // probar bulldozer y player
             if(vlen(bulldozer.pos - w) < 26.f) bulldozer.selected = true;
-            else if(vlen(player.pos - w) < 26.f) player.selected = true;
+           // else if(vlen(player.pos - w) < 26.f) player.selected = true;
         }
     }else{
         // selección por rectángulo (marquee)
@@ -178,8 +178,8 @@ void PlayState::update(float dt){
         cam = win.getDefaultView();
 
         // Player de pruebas (lo mantenemos por compatibilidad con tu base)
-        player.pos = {4*64.f+32.f, 4*64.f+32.f};
-        player.target = player.pos;
+        // player.pos = {4*64.f+32.f, 4*64.f+32.f};
+        // player.target = player.pos;
 
         font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf"); // puede fallar silencioso en otros SO
         hud.setFont(font); hud.setCharacterSize(16); hud.setFillColor(sf::Color::White);
@@ -249,20 +249,20 @@ void PlayState::update(float dt){
     win.setView(cam);
 
     // Movimiento del player de pruebas
-    if(player.hasTarget){
-        sf::Vector2f dir = player.target - player.pos;
-        float len = std::hypot(dir.x, dir.y);
-        if(len>2.f){
-            dir.x/=len; dir.y/=len;
-            player.pos += dir * player.speed * dt;
-        } else {
-            player.hasTarget=false;
-        }
-    }
+    // if(player.hasTarget){
+    //     sf::Vector2f dir = player.target - player.pos;
+    //     float len = std::hypot(dir.x, dir.y);
+    //     if(len>2.f){
+    //         dir.x/=len; dir.y/=len;
+    //         player.pos += dir * player.speed * dt;
+    //     } else {
+    //         player.hasTarget=false;
+    //     }
+    // }
 
     // ===== Minas: afectan a todos (player, aliados, bulldozer) =====
     for (auto& m : mines_) if (m.active) {
-        if (vlen(player.pos - m.pos) < m.radius){ m.active = false; player.selected=false; }
+        //if (vlen(player.pos - m.pos) < m.radius){ m.active = false; player.selected=false; }
         for (auto& a : allies_) if (a.alive && vlen(a.pos - m.pos) < m.radius){ m.active=false; a.alive=false; break; }
         if (bulldozer.alive && vlen(bulldozer.pos - m.pos) < m.radius){ m.active=false; bulldozer.alive=false; }
     }
@@ -441,7 +441,7 @@ void PlayState::update(float dt){
     fog.clear();
     if (showFog_) {
         // Revela player + aliados
-        fog.revealCircle(player.pos, 160.f);
+        //fog.revealCircle(player.pos, 160.f);
         for (auto& a : allies_) if(a.alive){
             fog.revealCircle(a.pos, 140.f);
         }
@@ -471,15 +471,15 @@ void PlayState::render(sf::RenderWindow& win){
 
     // Player de pruebas
     {
-        sf::CircleShape body(12.f); body.setOrigin(12,12); body.setPosition(player.pos);
-        body.setFillColor(sf::Color(60,150,70));
-        win.draw(body);
-        if(player.selected){
-            sf::CircleShape ring(18.f); ring.setOrigin(18,18); ring.setPosition(player.pos);
-            ring.setFillColor(sf::Color::Transparent);
-            ring.setOutlineColor(sf::Color::Green); ring.setOutlineThickness(2.f);
-            win.draw(ring);
-        }
+        //sf::CircleShape body(12.f); body.setOrigin(12,12); body.setPosition(player.pos);
+        // body.setFillColor(sf::Color(60,150,70));
+        // win.draw(body);
+        // if(player.selected){
+        //     sf::CircleShape ring(18.f); ring.setOrigin(18,18); ring.setPosition(player.pos);
+        //     ring.setFillColor(sf::Color::Transparent);
+        //     ring.setOutlineColor(sf::Color::Green); ring.setOutlineThickness(2.f);
+        //     win.draw(ring);
+        // }
     }
 
     // Minas activas

@@ -76,6 +76,9 @@ struct BuildJob {
     bool           started{false};    // ya llegó el dozer al target
 };
 
+// --- Decoración del campo ---
+
+
 class PlayState : public State {
 public:
     using State::State;
@@ -125,7 +128,7 @@ private:
     bool showFog_{true};
 
     // Player de pruebas (mantiene compatibilidad con tu base actual)
-    Unit player;
+    //Unit player;
 
     // --- Funciones auxiliares (implementadas en PlayState.cpp) ---
     void bulldozerBuildAttempt(const sf::Vector2f& pos);
