@@ -114,6 +114,29 @@ static sf::Vector2f worldMouse(sf::RenderWindow& win, const sf::View& cam){
     return win.mapPixelToCoords(p, cam);
 }
 
+static float rad2deg(float r){ return r*180.f/3.1415926535f; }
+static float deg2rad(float d){ return d*3.1415926535f/180.f; }
+static float angDeg(sf::Vector2f v){ return rad2deg(std::atan2(v.y, v.x)); }
+static float angDiff(float a, float b){ // diferencia mínima en grados [-180,180]
+    float d = std::fmod(a-b+540.f, 360.f) - 180.f;
+    return d;
+}
+
+// dibuja un arco en forma de triángulo-fan (semi círculo o lo que pidas)
+static void drawArc(sf::RenderWindow& win, sf::Vector2f center, float radius, float startDeg, float endDeg, sf::Color fill, int steps=24){
+    sf::VertexArray fan(sf::TriangleFan);
+    fan.append(sf::Vertex(center, fill));
+    float span = endDeg - startDeg;
+    for(int i=0;i<=steps;i++){
+        float t = (float)i/(float)steps;
+        float a = deg2rad(startDeg + span*t);
+        sf::Vector2f p = center + sf::Vector2f(std::cos(a), std::sin(a))*radius;
+        fan.append(sf::Vertex(p, fill));
+    }
+    win.draw(fan);
+}
+
+
 // mapear mouse (respetando la vista cam)
 
 // offsets para formación (cuadrícula compacta)
@@ -279,6 +302,26 @@ void PlayState::update(float dt){
         fog.init(map.width(), map.height());
         cam = win.getDefaultView();
 
+        // === Terreno: textura repetida ===
+        if (groundTex_.loadFromFile("assets/ground_tile.png")) {
+            groundTex_.setRepeated(true);
+            groundTex_.setSmooth(true);
+
+            const float TS = 64.f;
+            const float worldW = map.width()  * TS;
+            const float worldH = map.height() * TS;
+
+            groundRect_.setSize({worldW, worldH});
+            groundRect_.setPosition(0.f, 0.f);
+            groundRect_.setTexture(&groundTex_);
+            // El textureRect define cómo se “extiende” la texture en píxeles sobre el rectángulo completo
+            groundRect_.setTextureRect(sf::IntRect(0, 0, (int)worldW, (int)worldH));
+
+            groundLoaded_ = true;
+        } else {
+            std::cerr << "[WARN] No se pudo cargar assets/ground_tile.png\n";
+        }
+
         // Player de pruebas (lo mantenemos por compatibilidad con tu base)
         // player.pos = {4*64.f+32.f, 4*64.f+32.f};
         // player.target = player.pos;
@@ -304,6 +347,20 @@ void PlayState::update(float dt){
         buildingsA_.push_back({ Building::Type::HQ,     {200.f,200.f}, {}, 0.f });
         buildingsA_.push_back({ Building::Type::Garage, {320.f,200.f}, {}, 0.f });
         buildingsA_.push_back({ Building::Type::Depot,  {260.f,200.f}, {}, 0.f });
+        // === Fortines iniciales (defensas fijas) ===
+        // Uno protegiendo la base, mirando hacia la derecha (0°)
+        forts_.push_back(Fort{
+            /*pos*/       {240.f, 240.f},
+            /*hp*/        300.f,
+            /*maxHp*/     300.f,
+            /*dmg*/       25.f,
+            /*range*/     220.f,
+            /*facingDeg*/ 0.f,
+            /*fovDeg*/    180.f,
+            /*fireInterval*/ 0.8f,
+            /*fireCooldown*/ 0.f
+        });
+
 
         // estilo del rectángulo de selección
         dragRect_.setFillColor(sf::Color(0,120,255,40));
@@ -414,6 +471,37 @@ void PlayState::update(float dt){
         for (auto& a : allies_) if (a.alive && vlen(a.pos - m.pos) < m.radius){ m.active=false; a.alive=false; break; }
         if (bulldozer.alive && vlen(bulldozer.pos - m.pos) < m.radius){ m.active=false; bulldozer.alive=false; }
     }
+
+    // === Fortines: adquieren y disparan dentro de su fov y rango ===
+    // Nota: por ahora buscan en 'enemies_'. Si está vacío, no disparan (no hay crash).
+    for(auto& f : forts_){
+        if(f.hp <= 0.f) continue;
+        if(f.fireCooldown > 0.f) f.fireCooldown -= dt;
+
+        // Buscar objetivo válido
+        int best = -1; float bestD = 1e9f;
+        for(int i=0;i<(int)enemies_.size();++i){
+            auto& e = enemies_[i];
+            if(!e.alive) continue;
+            float d = vlen(e.pos - f.pos);
+            if(d > f.range) continue;
+
+            // Verificar FOV de 180° centrado en 'facingDeg'
+            float dirTo = angDeg(e.pos - f.pos);
+            float diff  = std::abs(angDiff(dirTo, f.facingDeg));
+            if(diff > f.fovDeg*0.5f) continue;
+
+            if(d < bestD){ bestD=d; best=i; }
+        }
+
+        // Disparo si hay objetivo
+        if(best != -1 && f.fireCooldown <= 0.f){
+            enemies_[best].hp -= f.dmg;
+            if(enemies_[best].hp <= 0.f){ enemies_[best].hp = 0.f; enemies_[best].alive=false; }
+            f.fireCooldown = f.fireInterval;
+        }
+    }
+
 
     if(dragging_){
         sf::Vector2f cur = worldMouse(win, cam);
@@ -756,6 +844,46 @@ void PlayState::render(sf::RenderWindow& win){
             win.draw(c);
         }
     }
+
+    // === Fortines (hexágono + arco de visión) ===
+    for(auto& f : forts_){
+        // Hexágono
+        sf::ConvexShape hex; hex.setPointCount(6);
+        float R = 18.f; // radio del fortín para dibujo
+        for(int k=0;k<6;k++){
+            float a = deg2rad(60.f*k - 30.f); // plano con un lado horizontal
+            hex.setPoint(k, sf::Vector2f(std::cos(a)*R, std::sin(a)*R));
+        }
+        hex.setOrigin(0.f, 0.f);
+        hex.setPosition(f.pos);
+        hex.setFillColor(sf::Color(100,130,160)); // color del fortín
+        win.draw(hex);
+
+        // Barra de vida encima
+        {
+            float w = 36.f;
+            float ratio = std::max(0.f, f.hp/f.maxHp);
+            sf::RectangleShape back({w+2.f, 5.f}); back.setOrigin((w+2.f)*0.5f, R+12.f);
+            back.setPosition(f.pos); back.setFillColor(sf::Color(0,0,0,180));
+            win.draw(back);
+            sf::RectangleShape fill({w*ratio, 3.f}); fill.setOrigin((w)*0.5f, R+12.f);
+            fill.setPosition(f.pos); fill.setFillColor(sf::Color(50,220,60));
+            win.draw(fill);
+        }
+
+        // Arco de visión 180° (semi-transparente)
+        float start = f.facingDeg - f.fovDeg*0.5f;
+        float end   = f.facingDeg + f.fovDeg*0.5f;
+        drawArc(win, f.pos, f.range, start, end, sf::Color(120, 180, 220, 28), 36);
+
+        // (Opcional) línea central de facing
+        sf::Vertex ray[2];
+        ray[0] = sf::Vertex(f.pos, sf::Color(160,200,230,150));
+        ray[1] = sf::Vertex(f.pos + sf::Vector2f(std::cos(deg2rad(f.facingDeg)), std::sin(deg2rad(f.facingDeg)))* (R+14.f),
+                            sf::Color(160,200,230,150));
+        win.draw(ray, 2, sf::Lines);
+    }
+
 
 
     if (gameOver_ != GameOver::None) {

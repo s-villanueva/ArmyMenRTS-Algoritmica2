@@ -115,6 +115,30 @@ struct BuildJob {
     bool           started{false};    // ya llegó el dozer al target
 };
 
+// --- Defensas fijas: Fortín ---
+struct Fort {
+    sf::Vector2f pos{};
+    float hp{300.f};
+    float maxHp{300.f};
+    float dmg{25.f};         // daño por disparo
+    float range{220.f};      // radio de defensa
+    float facingDeg{0.f};    // 0° = hacia +X (derecha)
+    float fovDeg{180.f};     // campo de visión en grados
+    float fireInterval{0.8f};
+    float fireCooldown{0.f};
+};
+inline std::vector<Fort> forts_;
+
+// (Opcional, para futuras pruebas con enemigos reales):
+struct Enemy {
+    sf::Vector2f pos{};
+    bool alive{true};
+    float hp{100.f};
+    sf::Color color{sf::Color(200,60,60)};
+};
+inline std::vector<Enemy> enemies_; // vacío por ahora, el Fort no dispara si no hay enemigos
+
+
 // --- Decoración del campo ---
 
 
