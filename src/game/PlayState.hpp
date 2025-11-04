@@ -1,9 +1,13 @@
 
 #pragma once
+#include <unordered_map>
+
 #include "../core/State.hpp"
 #include "../map/TileMap.hpp"
 #include "../map/FogOfWar.hpp"
 #include "../render/Renderer.hpp"
+
+enum class UnitType { Soldier, Harvester, Bulldozer /* + los que vengan */ };
 
 struct Unit{
     sf::Vector2f pos;
@@ -11,7 +15,30 @@ struct Unit{
     bool hasTarget=false;
     bool selected=false;
     float speed=120.f;
+    UnitType type = UnitType::Soldier; // NUEVO
+    bool alive = true;
 };
+
+struct ResourceNode {
+    sf::Vector2f pos;
+    float amount = 300.f;
+};
+struct Building {
+    enum class Type { HQ, Depot, Garage };
+    Type type;
+    sf::Vector2f pos;
+    std::vector<std::string> queue;
+    float buildTimer = 0.f;
+};
+
+inline std::unordered_map<std::string, int> costs_ {
+        {"HQ",50},{"Depot",40},{"Garage",60},
+        {"Soldier",10},{"Tank",50}
+};
+
+inline std::vector<ResourceNode> resources_;
+inline std::vector<Building> buildingsA_;
+inline int plastic_ = 200;
 
 struct Mine {
     sf::Vector2f pos;
@@ -33,6 +60,7 @@ private:
     FogOfWar fog;
     Renderer renderer;
     bool showFog_ = true;   // toggle
+    void bulldozerBuildAttempt(const sf::Vector2f& pos);
 
     Unit player;
     sf::View cam;

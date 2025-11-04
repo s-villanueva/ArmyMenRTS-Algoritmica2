@@ -2,6 +2,7 @@
 #include "PlayState.hpp"
 #include "../core/Game.hpp"
 #include <cmath>
+#include <iostream>
 
 void PlayState::handleEvent(const sf::Event& e){
     auto& win = game.window();
@@ -28,6 +29,20 @@ void PlayState::handleEvent(const sf::Event& e){
         showFog_ = !showFog_;
     }
 
+    if (e.type==sf::Event::KeyPressed && e.key.code==sf::Keyboard::Q){
+        for (auto& b : buildingsA_) if (b.type == Building::Type::HQ){
+            b.queue.push_back("Soldier");
+            break;
+        }
+    }
+    if (e.type==sf::Event::KeyPressed && e.key.code==sf::Keyboard::E){
+        for (auto& b : buildingsA_) if (b.type == Building::Type::Garage){
+            b.queue.push_back("Tank");
+            break;
+        }
+    }
+
+
     if (e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::M){
         auto& win = game.window();
         sf::Vector2f w = screenToWorld(win, sf::Mouse::getPosition(win));
@@ -47,8 +62,20 @@ void PlayState::update(float dt){
         player.target = player.pos;
         font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf"); // may fail silently on some OS
         hud.setFont(font); hud.setCharacterSize(16); hud.setFillColor(sf::Color::White);
+        // nodos de recurso
+        resources_.push_back({ {600.f, 400.f}, 300.f });
+        resources_.push_back({ {740.f, 520.f}, 300.f });
+        // depósito aliado
+        buildingsA_.push_back({ Building::Type::HQ,    {200.f,200.f}, {}, 0.f });
+        buildingsA_.push_back({ Building::Type::Garage,{320.f,200.f}, {}, 0.f });
+        buildingsA_.push_back({ Building::Type::Depot, {260.f, 200.f} });
+        // volqueta: reutiliza tu player o crea otra unidad
+        // si quieres que player sea harvester:
+        player.type = UnitType::Soldier;
         init=true;
     }
+
+
 
     // WASD camera
     float pan=400.f*dt;
@@ -78,6 +105,60 @@ void PlayState::update(float dt){
             m.active = false;
             // aplica daño/efecto; por ahora placeholder: deseleccionar jugador
             player.selected = false;
+        }
+    }
+
+    auto length = [](sf::Vector2f v){ return std::sqrt(v.x*v.x + v.y*v.y); };
+    auto norm   = [&](sf::Vector2f v){ float L = length(v); return (L>0)? v*(1.f/L) : sf::Vector2f(0,0); };
+
+    if (player.type == UnitType::Harvester) {
+        // Busca nodo más cercano con amount>0
+        int idx=-1; float best=1e9f;
+        for (int i=0; i<(int)resources_.size(); ++i){
+            if (resources_[i].amount <= 0) continue;
+            float d = length(resources_[i].pos - player.pos);
+            if (d < best){ best = d; idx = i; }
+        }
+
+        if (idx != -1) {
+            if (best < 14.f) {
+                // “mina” el recurso
+                resources_[idx].amount -= 20.f * dt;
+                if (resources_[idx].amount < 0) resources_[idx].amount = 0;
+            } else {
+                player.pos += norm(resources_[idx].pos - player.pos) * (player.speed * 0.6f) * dt;
+            }
+        } else {
+            // ya no quedan recursos -> ve al depósito y suma plástico
+            for (auto& b : buildingsA_) if (b.type == Building::Type::Depot) {
+                float d = length(b.pos - player.pos);
+                if (d < 16.f){ plastic_ += 60; } // depósito
+                else { player.pos += norm(b.pos - player.pos) * (player.speed * 0.6f) * dt; }
+                break;
+            }
+        }
+    }
+
+    for (auto& b : buildingsA_){
+        if (b.queue.empty()){ b.buildTimer = 0.f; continue; }
+        if (b.buildTimer <= 0.f) b.buildTimer = 2.0f; // tiempo placeholder
+        else b.buildTimer -= dt;
+
+        if (b.buildTimer <= 0.f){
+            std::string item = b.queue.front(); b.queue.erase(b.queue.begin());
+            if (item == "Soldier"){
+                if (plastic_ >= costs_["Soldier"]){
+                    plastic_ -= costs_["Soldier"];
+                    // crea una unidad nueva junto al edificio (aquí reusarías tu contenedor real de unidades)
+                    // por ahora, si solo tienes `player`, omite o prepara un vector< Unit > teamA_
+                    // teamA_.push_back(Unit{ .pos = b.pos + sf::Vector2f(0,40), .type = UnitType::Soldier });
+                }
+            } else if (item == "Tank"){
+                if (plastic_ >= costs_["Tank"]){
+                    plastic_ -= costs_["Tank"];
+                    // teamA_.push_back(Unit{ .pos = b.pos + sf::Vector2f(0,40), .type = UnitType::Soldier /* placeholder */ });
+                }
+            }
         }
     }
 
@@ -116,6 +197,26 @@ void PlayState::render(sf::RenderWindow& win){
         c.setFillColor(sf::Color(120,60,60));
         c.setPosition(m.pos);
         win.draw(c);
+    }
+
+    // recursos
+    for (auto& r : resources_){
+        sf::CircleShape c(8.f); c.setOrigin(8,8);
+        c.setFillColor(sf::Color(200,180,0));
+        c.setPosition(r.pos);
+        win.draw(c);
+    }
+
+    // HUD plástico (si ya usas sf::Text hud, añade la línea)
+    hud.setString("Plastico: " + std::to_string(plastic_));
+
+    for (auto& b : buildingsA_){
+        sf::RectangleShape s({40,40}); s.setOrigin(20,20);
+        s.setPosition(b.pos);
+        s.setFillColor(b.type==Building::Type::HQ ? sf::Color(120,160,120) :
+                       b.type==Building::Type::Depot ? sf::Color(160,160,80) :
+                                                       sf::Color(120,120,180));
+        win.draw(s);
     }
 
     if(player.selected){
